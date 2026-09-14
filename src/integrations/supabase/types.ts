@@ -14,7 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      deduction_claims: {
+        Row: {
+          claim_id: string
+          claimed_amount: number
+          invoice_id: string | null
+          reason: string
+          retailer: string
+          status: string | null
+        }
+        Insert: {
+          claim_id: string
+          claimed_amount: number
+          invoice_id?: string | null
+          reason: string
+          retailer: string
+          status?: string | null
+        }
+        Update: {
+          claim_id?: string
+          claimed_amount?: number
+          invoice_id?: string | null
+          reason?: string
+          retailer?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deduction_claims_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["invoice_id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          invoice_date: string
+          invoice_id: string
+          price_per_unit: number
+          product: string
+          retailer: string
+          units_shipped: number
+        }
+        Insert: {
+          invoice_date: string
+          invoice_id: string
+          price_per_unit: number
+          product: string
+          retailer: string
+          units_shipped: number
+        }
+        Update: {
+          invoice_date?: string
+          invoice_id?: string
+          price_per_unit?: number
+          product?: string
+          retailer?: string
+          units_shipped?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
