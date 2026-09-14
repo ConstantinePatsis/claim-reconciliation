@@ -8,7 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { FileText, ClipboardList, Scale } from "lucide-react";
+import { FileText, ClipboardList, Scale, Upload } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -155,6 +155,15 @@ function AppHeader() {
           >
             <FileText className="size-4" />
             Add Invoice
+          </Link>
+          <Link
+            to="/invoices/upload"
+            className={linkBase}
+            inactiveProps={{ className: `${linkBase} ${inactive}` }}
+            activeProps={{ className: `${linkBase} ${active}` }}
+          >
+            <Upload className="size-4" />
+            Upload Invoice
           </Link>
           <Link
             to="/claims/new"
