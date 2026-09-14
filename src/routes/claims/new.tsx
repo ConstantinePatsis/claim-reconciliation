@@ -11,7 +11,7 @@ const claimSchema = z.object({
   retailer: z.string().trim().min(1, "Retailer is required").max(200),
   reason: z.string().trim().min(1, "Reason is required").max(500),
   claimed_amount: z
-    .number({ error: "Claimed amount must be a number" })
+    .number("Claimed amount must be a number")
     .nonnegative("Claimed amount cannot be negative")
     .max(99999999.99, "Claimed amount is too large"),
 });
