@@ -10,11 +10,11 @@ const invoiceSchema = z.object({
   retailer: z.string().trim().min(1, "Retailer is required").max(200),
   product: z.string().trim().min(1, "Product is required").max(200),
   units_shipped: z
-    .number("Units shipped must be a number")
+    .number({ invalid_type_error: "Units shipped must be a number" })
     .int("Units shipped must be a whole number")
     .positive("Units shipped must be greater than 0"),
   price_per_unit: z
-    .number("Price per unit must be a number")
+    .number({ invalid_type_error: "Price per unit must be a number" })
     .positive("Price per unit must be greater than 0")
     .max(99999999.99, "Price per unit is too large"),
   invoice_date: z.string().min(1, "Invoice date is required"),
