@@ -1,0 +1,182 @@
+[
+  {
+    "file": "inv_01.png",
+    "expected": {
+      "retailer": "Whole Foods Market",
+      "product": "Free-Range Eggs Dozen",
+      "units_shipped": 301,
+      "price_per_unit": 11.59,
+      "invoice_date": "2025-01-24"
+    }
+  },
+  {
+    "file": "inv_02.png",
+    "expected": {
+      "retailer": "Costco Wholesale",
+      "product": "Sourdough Bread Loaf",
+      "units_shipped": 712,
+      "price_per_unit": 33.52,
+      "invoice_date": "2025-12-04"
+    }
+  },
+  {
+    "file": "inv_03.png",
+    "expected": {
+      "retailer": "Target Corporation",
+      "product": "Sparkling Water 12-pack",
+      "units_shipped": 52,
+      "price_per_unit": 2.07,
+      "invoice_date": "2025-10-14"
+    }
+  },
+  {
+    "file": "inv_04.png",
+    "expected": {
+      "retailer": "Kroger Co.",
+      "product": "Greek Yogurt 32oz",
+      "units_shipped": 636,
+      "price_per_unit": 1.92,
+      "invoice_date": "2025-04-17"
+    }
+  },
+  {
+    "file": "inv_05.png",
+    "expected": {
+      "retailer": "Safeway Inc.",
+      "product": "Ground Coffee 12oz Bag",
+      "units_shipped": 738,
+      "price_per_unit": 24.86,
+      "invoice_date": "2025-12-21"
+    }
+  },
+  {
+    "file": "inv_06.png",
+    "expected": {
+      "retailer": "Publix Super Markets",
+      "product": "Cheddar Cheese Block 8oz",
+      "units_shipped": 304,
+      "price_per_unit": 36.57,
+      "invoice_date": "2025-08-19"
+    }
+  },
+  {
+    "file": "inv_07.png",
+    "expected": {
+      "retailer": "Albertsons Companies",
+      "product": "Frozen Blueberries 16oz",
+      "units_shipped": 452,
+      "price_per_unit": 15.81,
+      "invoice_date": "2025-03-23"
+    }
+  },
+  {
+    "file": "inv_08.png",
+    "expected": {
+      "retailer": "Sprouts Farmers Market",
+      "product": "Olive Oil 500ml",
+      "units_shipped": 364,
+      "price_per_unit": 5.27,
+      "invoice_date": "2025-04-25"
+    }
+  },
+  {
+    "file": "inv_09.png",
+    "expected": {
+      "retailer": "Wegmans Food Markets",
+      "product": "Granola Bars 6-pack",
+      "units_shipped": 372,
+      "price_per_unit": 27.46,
+      "invoice_date": "2026-02-12"
+    }
+  },
+  {
+    "file": "inv_10.png",
+    "expected": {
+      "retailer": "H-E-B Grocery",
+      "product": "Paper Towels 6-roll",
+      "units_shipped": 569,
+      "price_per_unit": 6.27,
+      "invoice_date": "2025-12-15"
+    }
+  },
+  {
+    "file": "inv_11.png",
+    "expected": {
+      "retailer": "Meijer Inc.",
+      "product": "Dish Soap 24oz",
+      "units_shipped": 320,
+      "price_per_unit": 37.45,
+      "invoice_date": "2026-02-18"
+    }
+  },
+  {
+    "file": "inv_12.png",
+    "expected": {
+      "retailer": "Giant Eagle",
+      "product": "Pasta Sauce 24oz Jar",
+      "units_shipped": 91,
+      "price_per_unit": 2.78,
+      "invoice_date": "2026-04-23"
+    }
+  },
+  {
+    "file": "inv_13.png",
+    "expected": {
+      "retailer": "Stop & Shop",
+      "product": "Whole Wheat Pasta 16oz",
+      "units_shipped": 258,
+      "price_per_unit": 39.09,
+      "invoice_date": "2025-05-03"
+    }
+  },
+  {
+    "file": "inv_14.png",
+    "expected": {
+      "retailer": "Food Lion",
+      "product": "Trail Mix 10oz Bag",
+      "units_shipped": 670,
+      "price_per_unit": 37.66,
+      "invoice_date": null
+    }
+  },
+  {
+    "file": "inv_15.png",
+    "expected": {
+      "retailer": "Aldi Inc.",
+      "product": null,
+      "units_shipped": 234,
+      "price_per_unit": 30.41,
+      "invoice_date": "2025-06-12"
+    }
+  },
+  {
+    "file": "inv_16.png",
+    "expected": {
+      "retailer": "Hy-Vee",
+      "product": "Chicken Breast 5lb Pack",
+      "units_shipped": 195,
+      "price_per_unit": 24.39,
+      "invoice_date": "2025-10-21"
+    }
+  },
+  {
+    "file": "inv_17.png",
+    "expected": {
+      "retailer": "Vons",
+      "product": "Brown Rice 5lb Bag",
+      "units_shipped": 408,
+      "price_per_unit": 12.7,
+      "invoice_date": "2025-03-15"
+    }
+  },
+  {
+    "file": "inv_18.png",
+    "expected": {
+      "retailer": "Trader Joe's",
+      "product": "Organic Almond Milk 32oz",
+      "units_shipped": 77,
+      "price_per_unit": 10.89,
+      "invoice_date": "2025-11-11"
+    }
+  }
+]

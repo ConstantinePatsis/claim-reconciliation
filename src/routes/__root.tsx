@@ -8,7 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { FileText, ClipboardList, Scale, Upload } from "lucide-react";
+import { FileText, ClipboardList, FlaskConical, Scale, Upload } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -173,6 +173,15 @@ function AppHeader() {
           >
             <ClipboardList className="size-4" />
             Add Claim
+          </Link>
+          <Link
+            to="/eval"
+            className={linkBase}
+            inactiveProps={{ className: `${linkBase} ${inactive}` }}
+            activeProps={{ className: `${linkBase} ${active}` }}
+          >
+            <FlaskConical className="size-4" />
+            Eval
           </Link>
         </nav>
       </div>

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EvalRouteImport } from './routes/eval'
 import { Route as ClaimsNewRouteImport } from './routes/claims/new'
 import { Route as InvoicesNewRouteImport } from './routes/invoices/new'
 import { Route as InvoicesUploadRouteImport } from './routes/invoices/upload'
@@ -17,6 +18,11 @@ import { Route as InvoicesUploadRouteImport } from './routes/invoices/upload'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EvalRoute = EvalRouteImport.update({
+  id: '/eval',
+  path: '/eval',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClaimsNewRoute = ClaimsNewRouteImport.update({
@@ -37,12 +43,14 @@ const InvoicesUploadRoute = InvoicesUploadRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/eval': typeof EvalRoute
   '/claims/new': typeof ClaimsNewRoute
   '/invoices/new': typeof InvoicesNewRoute
   '/invoices/upload': typeof InvoicesUploadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/eval': typeof EvalRoute
   '/claims/new': typeof ClaimsNewRoute
   '/invoices/new': typeof InvoicesNewRoute
   '/invoices/upload': typeof InvoicesUploadRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/eval': typeof EvalRoute
   '/claims/new': typeof ClaimsNewRoute
   '/invoices/new': typeof InvoicesNewRoute
   '/invoices/upload': typeof InvoicesUploadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/claims/new' | '/invoices/new' | '/invoices/upload'
+  fullPaths: '/' | '/eval' | '/claims/new' | '/invoices/new' | '/invoices/upload'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/claims/new' | '/invoices/new' | '/invoices/upload'
-  id: '__root__' | '/' | '/claims/new' | '/invoices/new' | '/invoices/upload'
+  to: '/' | '/eval' | '/claims/new' | '/invoices/new' | '/invoices/upload'
+  id: '__root__' | '/' | '/eval' | '/claims/new' | '/invoices/new' | '/invoices/upload'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EvalRoute: typeof EvalRoute
   ClaimsNewRoute: typeof ClaimsNewRoute
   InvoicesNewRoute: typeof InvoicesNewRoute
   InvoicesUploadRoute: typeof InvoicesUploadRoute
@@ -99,11 +109,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvoicesUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/eval': {
+      id: '/eval'
+      path: '/eval'
+      fullPath: '/eval'
+      preLoaderRoute: typeof EvalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EvalRoute: EvalRoute,
   ClaimsNewRoute: ClaimsNewRoute,
   InvoicesNewRoute: InvoicesNewRoute,
   InvoicesUploadRoute: InvoicesUploadRoute,

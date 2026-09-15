@@ -6,6 +6,7 @@ import { z } from "zod";
 import { CheckCircle2, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractInvoiceFromFile } from "@/lib/invoice-extraction.functions";
+import { blobToBase64 } from "@/lib/utils";
 
 const invoiceSchema = z.object({
   invoice_id: z.string().trim().min(1, "Invoice ID is required").max(50),
@@ -53,17 +54,6 @@ const emptyForm = {
   invoice_date: "",
 };
 
-async function fileToBase64(file: File): Promise<string> {
-  const buffer = await file.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-  }
-  return btoa(binary);
-}
-
 function UploadInvoicePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -95,7 +85,7 @@ function UploadInvoicePage() {
 
     setExtracting(true);
     try {
-      const base64 = await fileToBase64(file);
+      const base64 = await blobToBase64(file);
       const result = await extract({
         data: {
           fileName: file.name,
