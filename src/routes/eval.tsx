@@ -89,7 +89,9 @@ async function runPool<T>(items: T[], limit: number, worker: (item: T) => Promis
   async function next(): Promise<void> {
     const i = cursor++;
     if (i >= items.length) return;
-    await worker(items[i]);
+    const item = items[i];
+    if (!item) return;
+    await worker(item);
     return next();
   }
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => next()));
