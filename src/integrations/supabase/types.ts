@@ -49,36 +49,6 @@ export type Database = {
           },
         ]
       }
-      extraction_reviews: {
-        Row: {
-          created_at: string
-          extracted_value: string | null
-          field: string
-          file_name: string
-          final_value: string | null
-          id: number
-          was_corrected: boolean
-        }
-        Insert: {
-          created_at?: string
-          extracted_value?: string | null
-          field: string
-          file_name: string
-          final_value?: string | null
-          id?: number
-          was_corrected: boolean
-        }
-        Update: {
-          created_at?: string
-          extracted_value?: string | null
-          field?: string
-          file_name?: string
-          final_value?: string | null
-          id?: number
-          was_corrected?: boolean
-        }
-        Relationships: []
-      }
       invoices: {
         Row: {
           invoice_date: string
