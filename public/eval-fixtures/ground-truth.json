@@ -178,5 +178,25 @@
       "price_per_unit": 10.89,
       "invoice_date": "2025-11-11"
     }
+  },
+  {
+    "file": "inv_19.pdf",
+    "expected": {
+      "retailer": "Whole Foods Market",
+      "product": "Free-Range Eggs Dozen",
+      "units_shipped": 294,
+      "price_per_unit": 3.68,
+      "invoice_date": "2025-06-13"
+    }
+  },
+  {
+    "file": "inv_20.pdf",
+    "expected": {
+      "retailer": "Costco Wholesale",
+      "product": "Sourdough Bread Loaf",
+      "units_shipped": 531,
+      "price_per_unit": 18.26,
+      "invoice_date": "2026-04-21"
+    }
   }
 ]

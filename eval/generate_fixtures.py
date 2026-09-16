@@ -195,6 +195,10 @@ def build_specs():
     # 18: rotated/skewed scan
     specs.append(base(18, rotate=3.5))
 
+    # 19-20: native PDF documents (exercises the input_file code path, not input_image)
+    specs.append(base(19, pdf=True))
+    specs.append(base(20, pdf=True, labels=alt_labels, title="PACKING SLIP", date_style="us_slash"))
+
     return specs
 
 
@@ -204,8 +208,12 @@ def main():
 
     for spec in specs:
         img = render_invoice(spec)
-        filename = f"{spec['id']}.png"
-        img.save(OUT_DIR / filename)
+        if spec.get("pdf"):
+            filename = f"{spec['id']}.pdf"
+            img.convert("RGB").save(OUT_DIR / filename, "PDF", resolution=150.0)
+        else:
+            filename = f"{spec['id']}.png"
+            img.save(OUT_DIR / filename)
 
         expected = {
             "retailer": spec["retailer"],

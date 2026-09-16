@@ -5,7 +5,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import { z } from "zod";
 import { CheckCircle2, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { extractInvoiceFromFile } from "@/lib/invoice-extraction.functions";
+import { extractInvoiceFromFile, type ExtractedInvoice, type FieldConfidence } from "@/lib/invoice-extraction.functions";
 import { blobToBase64 } from "@/lib/utils";
 
 const invoiceSchema = z.object({
@@ -54,6 +54,30 @@ const emptyForm = {
   invoice_date: "",
 };
 
+const CONFIDENCE_STYLES: Record<FieldConfidence, string> = {
+  high: "bg-success/15 text-success",
+  medium: "bg-warning/15 text-warning",
+  low: "bg-destructive/15 text-destructive",
+};
+
+function ConfidenceBadge({ level }: { level: FieldConfidence }) {
+  return (
+    <span
+      className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${CONFIDENCE_STYLES[level]}`}
+    >
+      {level}
+    </span>
+  );
+}
+
+function wasCorrected(extracted: string | number | null, final: string | number): boolean {
+  if (extracted === null) return true;
+  if (typeof extracted === "number" && typeof final === "number") {
+    return Math.abs(extracted - final) > 0.005;
+  }
+  return String(extracted).trim() !== String(final).trim();
+}
+
 function UploadInvoicePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -64,6 +88,7 @@ function UploadInvoicePage() {
   const [extracted, setExtracted] = useState(false);
   const [missing, setMissing] = useState<string[]>([]);
   const [form, setForm] = useState(emptyForm);
+  const [extractedSnapshot, setExtractedSnapshot] = useState<ExtractedInvoice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -77,6 +102,7 @@ function UploadInvoicePage() {
     setError(null);
     setSuccess(null);
     setFileName(file.name);
+    setExtractedSnapshot(null);
 
     if (file.size > MAX_BYTES) {
       setError("That file is larger than 15 MB. Please upload a smaller image or PDF.");
@@ -110,6 +136,7 @@ function UploadInvoicePage() {
         result.invoice_date == null ? "invoice date" : null,
       ].filter(Boolean) as string[];
       setMissing(blanks);
+      setExtractedSnapshot(result);
       setExtracted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not read that file. Please try again.");
@@ -153,10 +180,44 @@ function UploadInvoicePage() {
     setSuccess(`Invoice ${parsed.data.invoice_id} saved.`);
     queryClient.invalidateQueries({ queryKey: ["reconciliation"] });
     queryClient.invalidateQueries({ queryKey: ["invoices"] });
+
+    if (extractedSnapshot) {
+      const reviewRows = [
+        { field: "retailer", extracted_value: extractedSnapshot.retailer, final_value: parsed.data.retailer },
+        { field: "product", extracted_value: extractedSnapshot.product, final_value: parsed.data.product },
+        {
+          field: "units_shipped",
+          extracted_value: extractedSnapshot.units_shipped,
+          final_value: parsed.data.units_shipped,
+        },
+        {
+          field: "price_per_unit",
+          extracted_value: extractedSnapshot.price_per_unit,
+          final_value: parsed.data.price_per_unit,
+        },
+        {
+          field: "invoice_date",
+          extracted_value: extractedSnapshot.invoice_date,
+          final_value: parsed.data.invoice_date,
+        },
+      ].map((row) => ({
+        file_name: fileName ?? "unknown",
+        field: row.field,
+        extracted_value: row.extracted_value === null ? null : String(row.extracted_value),
+        final_value: String(row.final_value),
+        was_corrected: wasCorrected(row.extracted_value, row.final_value),
+      }));
+
+      // Best-effort telemetry — never block the save flow on this.
+      const { error: reviewError } = await supabase.from("extraction_reviews").insert(reviewRows);
+      if (reviewError) console.error("[extraction_reviews]", reviewError.message);
+    }
+
     setForm(emptyForm);
     setExtracted(false);
     setMissing([]);
     setFileName(null);
+    setExtractedSnapshot(null);
   }
 
   return (
@@ -241,8 +302,9 @@ function UploadInvoicePage() {
           </div>
 
           <div>
-            <label htmlFor="retailer" className="field-label">
+            <label htmlFor="retailer" className="field-label flex items-center">
               Retailer
+              {extractedSnapshot && <ConfidenceBadge level={extractedSnapshot.confidence.retailer} />}
             </label>
             <input
               id="retailer"
@@ -253,8 +315,9 @@ function UploadInvoicePage() {
           </div>
 
           <div>
-            <label htmlFor="product" className="field-label">
+            <label htmlFor="product" className="field-label flex items-center">
               Product
+              {extractedSnapshot && <ConfidenceBadge level={extractedSnapshot.confidence.product} />}
             </label>
             <input
               id="product"
@@ -266,8 +329,11 @@ function UploadInvoicePage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="units_shipped" className="field-label">
+              <label htmlFor="units_shipped" className="field-label flex items-center">
                 Units Shipped
+                {extractedSnapshot && (
+                  <ConfidenceBadge level={extractedSnapshot.confidence.units_shipped} />
+                )}
               </label>
               <input
                 id="units_shipped"
@@ -280,8 +346,11 @@ function UploadInvoicePage() {
               />
             </div>
             <div>
-              <label htmlFor="price_per_unit" className="field-label">
+              <label htmlFor="price_per_unit" className="field-label flex items-center">
                 Price per Unit ($)
+                {extractedSnapshot && (
+                  <ConfidenceBadge level={extractedSnapshot.confidence.price_per_unit} />
+                )}
               </label>
               <input
                 id="price_per_unit"
@@ -296,8 +365,11 @@ function UploadInvoicePage() {
           </div>
 
           <div>
-            <label htmlFor="invoice_date" className="field-label">
+            <label htmlFor="invoice_date" className="field-label flex items-center">
               Invoice Date
+              {extractedSnapshot && (
+                <ConfidenceBadge level={extractedSnapshot.confidence.invoice_date} />
+              )}
             </label>
             <input
               id="invoice_date"

@@ -1,8 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, FlaskConical, Loader2, XCircle } from "lucide-react";
-import { extractInvoiceFromFile, type ExtractedInvoice } from "@/lib/invoice-extraction.functions";
+import {
+  extractInvoiceFromFile,
+  type ExtractedInvoice,
+  type FieldConfidence,
+} from "@/lib/invoice-extraction.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { blobToBase64 } from "@/lib/utils";
 
 export const Route = createFileRoute("/eval")({
@@ -69,6 +74,16 @@ function formatValue(key: FieldKey, value: unknown): string {
   return String(value);
 }
 
+function mimeTypeFor(file: string): string {
+  return file.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/png";
+}
+
+const CONFIDENCE_DOT: Record<FieldConfidence, string> = {
+  high: "bg-success",
+  medium: "bg-warning",
+  low: "bg-destructive",
+};
+
 async function runPool<T>(items: T[], limit: number, worker: (item: T) => Promise<void>) {
   let cursor = 0;
   async function next(): Promise<void> {
@@ -118,6 +133,52 @@ function EvalPage() {
     };
   }, [results]);
 
+  const calibration = useMemo(() => {
+    const buckets: Record<FieldConfidence, { correct: number; total: number }> = {
+      high: { correct: 0, total: 0 },
+      medium: { correct: 0, total: 0 },
+      low: { correct: 0, total: 0 },
+    };
+    for (const r of results) {
+      if (r.status !== "done" || !r.extracted || !r.fieldMatches) continue;
+      for (const { key } of FIELDS) {
+        const level = r.extracted.confidence[key];
+        buckets[level].total += 1;
+        if (r.fieldMatches[key]) buckets[level].correct += 1;
+      }
+    }
+    return buckets;
+  }, [results]);
+
+  const [liveStats, setLiveStats] = useState<Record<FieldKey, { corrected: number; total: number }> | null>(
+    null,
+  );
+  const [liveStatsError, setLiveStatsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.from("extraction_reviews").select("field, was_corrected");
+      if (error) {
+        setLiveStatsError(error.message);
+        return;
+      }
+      const stats: Record<FieldKey, { corrected: number; total: number }> = {
+        retailer: { corrected: 0, total: 0 },
+        product: { corrected: 0, total: 0 },
+        units_shipped: { corrected: 0, total: 0 },
+        price_per_unit: { corrected: 0, total: 0 },
+        invoice_date: { corrected: 0, total: 0 },
+      };
+      for (const row of data ?? []) {
+        const key = row.field as FieldKey;
+        if (!(key in stats)) continue;
+        stats[key].total += 1;
+        if (row.was_corrected) stats[key].corrected += 1;
+      }
+      setLiveStats(stats);
+    })();
+  }, []);
+
   async function runSuite() {
     setRunning(true);
     setLoadError(null);
@@ -140,7 +201,7 @@ function EvalPage() {
           const base64 = await blobToBase64(blob);
 
           const extracted = await extract({
-            data: { fileName: fixture.file, mimeType: "image/png", base64 },
+            data: { fileName: fixture.file, mimeType: mimeTypeFor(fixture.file), base64 },
           });
 
           const matches = Object.fromEntries(
@@ -188,16 +249,16 @@ function EvalPage() {
           Extraction Eval Suite
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Runs the invoice extraction model against 18 fixed test invoices — clean, relabeled,
-          unusual date formats, missing fields, noisy scans, and a skewed scan — and scores the
-          result field by field against known-correct values.
+          Runs the invoice extraction model against 20 fixed test invoices — clean, relabeled,
+          unusual date formats, missing fields, noisy scans, a skewed scan, and 2 native PDFs — and
+          scores the result field by field against known-correct values.
         </p>
       </div>
 
       <div className="flex items-center gap-4">
         <button type="button" className="btn-primary" onClick={runSuite} disabled={running}>
           {running ? <Loader2 className="size-4 animate-spin" /> : <FlaskConical className="size-4" />}
-          {running ? `Running… (${done.length}/${results.length || 18})` : "Run Eval Suite"}
+          {running ? `Running… (${done.length}/${results.length || 20})` : "Run Eval Suite"}
         </button>
         <p className="text-xs text-muted-foreground">
           Calls the AI model once per fixture — this uses real AI credits and takes about a minute.
@@ -247,6 +308,32 @@ function EvalPage() {
             })}
           </div>
 
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Confidence Calibration
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Is the model's own confidence signal trustworthy? Accuracy of extracted fields, broken
+              down by the confidence level the model reported for them.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-6">
+              {(["high", "medium", "low"] as const).map((level) => {
+                const b = calibration[level];
+                return (
+                  <div key={level} className="flex items-center gap-2">
+                    <span className={`size-2.5 rounded-full ${CONFIDENCE_DOT[level]}`} />
+                    <span className="text-sm">
+                      <span className="font-medium capitalize">{level}</span>{" "}
+                      <span className="text-muted-foreground">
+                        {b.total > 0 ? `${((b.correct / b.total) * 100).toFixed(0)}% correct (n=${b.total})` : "no data"}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -282,9 +369,16 @@ function EvalPage() {
                         FIELDS.map(({ key }) => {
                           const correct = r.fieldMatches?.[key] ?? false;
                           const extractedValue = r.extracted ? r.extracted[key] : undefined;
+                          const confidenceLevel = r.extracted?.confidence[key];
                           return (
                             <td key={key} className="px-4 py-3">
                               <div className="flex items-center gap-1.5">
+                                {confidenceLevel && (
+                                  <span
+                                    className={`size-1.5 shrink-0 rounded-full ${CONFIDENCE_DOT[confidenceLevel]}`}
+                                    title={`confidence: ${confidenceLevel}`}
+                                  />
+                                )}
                                 {correct ? (
                                   <CheckCircle2 className="size-4 shrink-0 text-success" />
                                 ) : (
@@ -309,6 +403,41 @@ function EvalPage() {
           </div>
         </>
       )}
+
+      <div className="rounded-lg border border-border bg-card p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Live Correction Rate
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          From real usage of the Upload Invoice page — how often a human changed an AI-extracted
+          field before saving. This is a production signal, separate from the synthetic fixtures
+          above.
+        </p>
+
+        {liveStatsError && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Live correction stats aren't available yet ({liveStatsError}).
+          </p>
+        )}
+
+        {!liveStatsError && liveStats && (
+          <div className="mt-3 flex flex-wrap gap-6">
+            {FIELDS.map(({ key, label }) => {
+              const s = liveStats[key];
+              return (
+                <div key={key} className="text-sm">
+                  <span className="font-medium">{label}:</span>{" "}
+                  <span className="text-muted-foreground">
+                    {s.total > 0
+                      ? `${((s.corrected / s.total) * 100).toFixed(0)}% corrected (n=${s.total})`
+                      : "no data yet"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -8,13 +8,24 @@ const ExtractInput = z.object({
   base64: z.string().min(1),
 });
 
+export type FieldConfidence = "high" | "medium" | "low";
+
 export type ExtractedInvoice = {
   retailer: string | null;
   product: string | null;
   units_shipped: number | null;
   price_per_unit: number | null;
   invoice_date: string | null;
+  confidence: {
+    retailer: FieldConfidence;
+    product: FieldConfidence;
+    units_shipped: FieldConfidence;
+    price_per_unit: FieldConfidence;
+    invoice_date: FieldConfidence;
+  };
 };
+
+const confidenceEnum = { type: "string", enum: ["high", "medium", "low"] } as const;
 
 const invoiceJsonSchema = {
   type: "object",
@@ -25,8 +36,20 @@ const invoiceJsonSchema = {
     units_shipped: { type: ["integer", "null"] },
     price_per_unit: { type: ["number", "null"] },
     invoice_date: { type: ["string", "null"], description: "YYYY-MM-DD" },
+    confidence: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        retailer: confidenceEnum,
+        product: confidenceEnum,
+        units_shipped: confidenceEnum,
+        price_per_unit: confidenceEnum,
+        invoice_date: confidenceEnum,
+      },
+      required: ["retailer", "product", "units_shipped", "price_per_unit", "invoice_date"],
+    },
   },
-  required: ["retailer", "product", "units_shipped", "price_per_unit", "invoice_date"],
+  required: ["retailer", "product", "units_shipped", "price_per_unit", "invoice_date", "confidence"],
 } as const;
 
 const PROMPT = [
@@ -35,6 +58,10 @@ const PROMPT = [
   "price_per_unit (decimal number, per single unit), invoice_date (YYYY-MM-DD).",
   "If a field is not clearly stated in the document, return null for it.",
   "Never guess or infer a value you cannot read.",
+  "Also return a confidence level for each field: \"high\" if it is stated clearly and",
+  "unambiguously, \"medium\" if it is present but required some interpretation (unusual",
+  "formatting, partly obscured, inferred from context), or \"low\" if the field is missing,",
+  "illegible, or you are unsure. A null field must have confidence \"low\".",
 ].join(" ");
 
 export const extractInvoiceFromFile = createServerFn({ method: "POST" })
@@ -132,15 +159,30 @@ export const extractInvoiceFromFile = createServerFn({ method: "POST" })
         units_shipped: null,
         price_per_unit: null,
         invoice_date: null,
+        confidence: {
+          retailer: "low",
+          product: "low",
+          units_shipped: "low",
+          price_per_unit: "low",
+          invoice_date: "low",
+        },
       };
     }
 
+    const ConfidenceSchema = z.enum(["high", "medium", "low"]);
     const ResultSchema = z.object({
       retailer: z.string().nullable(),
       product: z.string().nullable(),
       units_shipped: z.number().nullable(),
       price_per_unit: z.number().nullable(),
       invoice_date: z.string().nullable(),
+      confidence: z.object({
+        retailer: ConfidenceSchema,
+        product: ConfidenceSchema,
+        units_shipped: ConfidenceSchema,
+        price_per_unit: ConfidenceSchema,
+        invoice_date: ConfidenceSchema,
+      }),
     });
 
     try {
