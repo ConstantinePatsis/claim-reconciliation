@@ -65,7 +65,7 @@ export type Database = {
           field: string
           file_name: string
           final_value?: string | null
-          id?: number
+          id?: never
           was_corrected: boolean
         }
         Update: {
@@ -74,7 +74,7 @@ export type Database = {
           field?: string
           file_name?: string
           final_value?: string | null
-          id?: number
+          id?: never
           was_corrected?: boolean
         }
         Relationships: []
